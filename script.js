@@ -15,6 +15,12 @@ function updateClock() {
   document.getElementById("clock").textContent = formatted;
   document.getElementById("tz").textContent = tzName;
 }
+
+function setTextById(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
 updateClock();
 setInterval(updateClock, 1000);
 
@@ -472,6 +478,43 @@ function formatBucket(hour) {
   return "Night";
 }
 
+function formatHour12(hour) {
+  const normalized = ((hour % 24) + 24) % 24;
+  const suffix = normalized < 12 ? "AM" : "PM";
+  const base = normalized % 12 || 12;
+  return { hour: base, suffix };
+}
+
+function formatHourRange(startHour, endHour) {
+  const start = formatHour12(startHour);
+  const end = formatHour12(endHour);
+
+  const startPart = `${start.hour}`;
+  const endPart = `${end.hour}${end.suffix}`;
+
+  if (start.suffix === end.suffix) {
+    if (start.hour === 11 && end.hour === 12 && start.suffix === "AM") {
+      // crosses AM->PM at 12
+      return `${start.hour}${start.suffix}-${endPart}`;
+    }
+    return `${startPart}-${endPart}`;
+  }
+
+  return `${start.hour}${start.suffix}-${endPart}`;
+}
+
+function getDayName(date, weekdayStyle = "long") {
+  return date.toLocaleDateString(undefined, { weekday: weekdayStyle });
+}
+
+function getSegmentTimeClass(date) {
+  const hour = date.getHours();
+  if (hour >= 6 && hour < 8) return "time-twilight-morning";
+  if (hour >= 8 && hour < 18) return "time-day";
+  if (hour >= 18 && hour < 20) return "time-twilight-evening";
+  return "time-night";
+}
+
 function getWeatherSeverity(code) {
   if (code === undefined || code === null) return 0;
   // lower is better; higher is more severe.
@@ -608,10 +651,9 @@ function buildForecast(data) {
   const start = startIndex >= 0 ? startIndex : 0;
   const end = Math.min(start + 24, times.length);
 
-  const startDate = times[start] ? new Date(times[start]) : now;
   const forecast24Heading = document.getElementById("forecast24Heading");
   if (forecast24Heading) {
-    forecast24Heading.textContent = `Next 24h (2-hour grouped, starting ${startDate.toLocaleString()})`;
+    forecast24Heading.textContent = "Next 24 hours";
   }
 
   // group into 2-hour intervals (12 segments max)
@@ -667,11 +709,14 @@ function buildForecast(data) {
       }
     }
 
-    const startHour = new Date(times[segStart]).getHours();
+    const startDate = new Date(times[segStart]);
+    const startHour = startDate.getHours();
     const labelHour2 = (startHour + 1) % 24;
 
     segments.push({
-      label: `${startHour.toString().padStart(2, "0")}-${labelHour2.toString().padStart(2, "0")}`,
+      label: formatHourRange(startHour, labelHour2),
+      date: startDate,
+      timeClass: getSegmentTimeClass(startDate),
       code: bestCode,
       minTemp: minTemp === Infinity ? undefined : minTemp,
       maxTemp: maxTemp === -Infinity ? undefined : maxTemp,
@@ -688,6 +733,7 @@ function buildForecast(data) {
   segments.forEach((segment) => {
     const cell = document.createElement("th");
     cell.textContent = segment.label;
+    cell.classList.add(segment.timeClass);
     headerRow.appendChild(cell);
   });
 
@@ -699,9 +745,36 @@ function buildForecast(data) {
     return row;
   };
 
+  const dayRow = document.createElement("tr");
+  const dayLabelCell = document.createElement("th");
+  dayLabelCell.textContent = "Day";
+  dayRow.appendChild(dayLabelCell);
+
+  let currentDayName = null;
+  let currentDayCell = null;
+  let daySpan = 0;
+
+  segments.forEach((segment, index) => {
+    const dayName = getDayName(segment.date);
+    if (dayName !== currentDayName) {
+      if (currentDayCell) {
+        currentDayCell.colSpan = daySpan;
+      }
+      currentDayName = dayName;
+      daySpan = 1;
+      currentDayCell = document.createElement("th");
+      currentDayCell.textContent = dayName;
+      dayRow.appendChild(currentDayCell);
+    } else {
+      daySpan += 1;
+    }
+    if (index === segments.length - 1 && currentDayCell) {
+      currentDayCell.colSpan = daySpan;
+    }
+  });
+
   const conditionRow = rowDef("Condition");
   const tempRow = rowDef("Temp");
-  const feelsRow = rowDef("Feels like");
   const windRow = rowDef("Wind");
   const gustRow = rowDef("Max Gust");
 
@@ -713,7 +786,7 @@ function buildForecast(data) {
     const tempCell = document.createElement("td");
     tempCell.innerHTML =
       segment.minTemp !== undefined
-        ? `<span class="digits">${Math.round(segment.minTemp)}</span><span class="unit">°C</span> / <span class="digits">${Math.round(segment.maxTemp)}</span><span class="unit">°C</span>`
+        ? `<span class="digits">${Math.round(segment.minTemp)}</span><span class="unit">-${Math.round(segment.maxTemp)}°C</span>`
         : "—";
     if (segment.minTemp !== undefined) {
       if (segment.minTemp <= settings.minTempAlarm)
@@ -726,13 +799,6 @@ function buildForecast(data) {
         tempCell.classList.add("forecast-warning");
     }
     tempRow.appendChild(tempCell);
-
-    const feelsCell = document.createElement("td");
-    feelsCell.innerHTML =
-      segment.minFeel !== undefined
-        ? `<span class="digits">${Math.round(segment.minFeel)}</span><span class="unit">°C</span> / <span class="digits">${Math.round(segment.maxFeel)}</span><span class="unit">°C</span>`
-        : "—";
-    feelsRow.appendChild(feelsCell);
 
     const windCell = document.createElement("td");
     windCell.innerHTML =
@@ -755,17 +821,14 @@ function buildForecast(data) {
     gustRow.appendChild(gustCell);
   });
 
-  body24.append(conditionRow, tempRow, feelsRow, windRow, gustRow);
+  body24.append(conditionRow, dayRow, tempRow, windRow, gustRow);
   updateLookaheadSummary(segments);
 
-  // summary 25h-7d by day/bucket
-  const buckets = {}; // {day|bucket: stats}
+  // summary 25h-7d by day
+  const dayStats = {}; // {day: stats}
   for (let i = 24; i < Math.min(times.length, 168); i++) {
     const d = new Date(times[i]);
-    const hour = d.getHours();
-    const bucket = formatBucket(hour);
     const dayKey = d.toLocaleDateString();
-    const key = `${dayKey}|${bucket}`;
 
     const temp = temps[i];
     const gust = gusts[i];
@@ -773,12 +836,12 @@ function buildForecast(data) {
     const code = codes[i];
     const dir = windDirs[i];
 
-    if (!buckets[key]) {
-      buckets[key] = {
+    if (!dayStats[dayKey]) {
+      dayStats[dayKey] = {
+        date: d,
         day: dayKey,
-        bucket,
-        maxTemp: temp === undefined ? -Infinity : temp,
         minTemp: temp === undefined ? Infinity : temp,
+        maxTemp: temp === undefined ? -Infinity : temp,
         maxGust: gust === undefined ? -Infinity : gust,
         maxGustDir: dir,
         maxWind: wind === undefined ? -Infinity : wind,
@@ -786,7 +849,7 @@ function buildForecast(data) {
         bestCode: code,
       };
     }
-    const entry = buckets[key];
+    const entry = dayStats[dayKey];
 
     if (temp !== undefined) {
       entry.maxTemp = Math.max(entry.maxTemp, temp);
@@ -801,36 +864,34 @@ function buildForecast(data) {
       entry.maxWindDir = dir;
     }
     if (code !== undefined) {
-      // pick most severe by gust + wind
-      if (
-        entry.bestCode === undefined ||
-        gust > entry.maxGust ||
-        wind > entry.maxWind
-      ) {
+      const existingSeverity = getWeatherSeverity(entry.bestCode);
+      const thisSeverity = getWeatherSeverity(code);
+      if (entry.bestCode === undefined || thisSeverity > existingSeverity) {
         entry.bestCode = code;
       }
     }
   }
 
-  const summaryRows = Object.values(buckets).sort((a, b) => {
-    const dateA = new Date(a.day);
-    const dateB = new Date(b.day);
-    if (dateA - dateB !== 0) return dateA - dateB;
-    const order = { Morning: 0, Daytime: 1, Evening: 2, Night: 3 };
-    return order[a.bucket] - order[b.bucket];
+  const summaryRows = Object.values(dayStats).sort((a, b) => {
+    const dateA = a.date;
+    const dateB = b.date;
+    return dateA - dateB;
   });
 
   summaryRows.forEach((entry) => {
     const row = document.createElement("tr");
-    const periodCell = document.createElement("td");
+    const dayCell = document.createElement("td");
     const condCell = document.createElement("td");
     const tempCell = document.createElement("td");
     const gustCell = document.createElement("td");
     const windCell = document.createElement("td");
 
-    periodCell.textContent = `${entry.day} ${entry.bucket}`;
+    dayCell.textContent = getDayName(entry.date, "short");
     condCell.textContent = `${getWeatherIcon(entry.bestCode, true)} ${WMO_DESCRIPTIONS[entry.bestCode] || "—"}`;
-    tempCell.textContent = `${entry.minTemp === Infinity ? "—" : Math.round(entry.minTemp) + "°C"} / ${entry.maxTemp === -Infinity ? "—" : Math.round(entry.maxTemp) + "°C"}`;
+    tempCell.textContent =
+      entry.minTemp === Infinity || entry.maxTemp === -Infinity
+        ? "—"
+        : `${Math.round(entry.minTemp)}-${Math.round(entry.maxTemp)}°C`;
 
     gustCell.textContent =
       entry.maxGust === -Infinity
@@ -861,7 +922,7 @@ function buildForecast(data) {
         gustCell.classList.add("forecast-warning");
     }
 
-    row.append(periodCell, condCell, tempCell, gustCell, windCell);
+    row.append(dayCell, condCell, tempCell, gustCell, windCell);
     rowsSummary.appendChild(row);
   });
 }
@@ -896,24 +957,29 @@ async function fetchWeather(lat, lon) {
         ? `${degToCompass(todayWindDir)} (${Math.round(todayWindDir)}°)`
         : "—";
 
-    const readableDesc = desc + " (current)";
-    document.getElementById("wxDesc").textContent = readableDesc;
-    document.getElementById("wxIcon").textContent = getWeatherIcon(
-      c.weathercode,
-      true,
+    const readableDesc = desc;
+    setTextById("wxDesc", readableDesc);
+    setTextById("wxIcon", getWeatherIcon(c.weathercode, true));
+    setTextById("wxIconLabel", readableDesc);
+    setTextById(
+      "wxTemp",
+      todayTemp !== undefined ? `${Math.round(todayTemp)}°C` : "—",
     );
-    document.getElementById("wxIconLabel").textContent = readableDesc;
-    document.getElementById("wxTemp").textContent =
-      todayTemp !== undefined ? `${Math.round(todayTemp)}°C` : "—";
-    document.getElementById("wxFeels").textContent =
-      todayTemp !== undefined ? `${Math.round(todayTemp)}°C` : "—";
-    document.getElementById("wxWind").textContent =
+    setTextById(
+      "wxFeels",
+      todayTemp !== undefined ? `${Math.round(todayTemp)}°C` : "—",
+    );
+    setTextById(
+      "wxWind",
       todayWindSpeed !== undefined && todayWindDir !== undefined
         ? `${Math.round(todayWindSpeed)} km/h ${bearingArrow(todayWindDir)} ${degToCompass(todayWindDir)}`
-        : "—";
-    document.getElementById("wxHum").textContent =
-      todayHumidity !== undefined ? `${Math.round(todayHumidity)}%` : "—";
-    document.getElementById("updatedInfo").textContent = `Updated: ${c.time}`;
+        : "—",
+    );
+    setTextById(
+      "wxHum",
+      todayHumidity !== undefined ? `${Math.round(todayHumidity)}%` : "—",
+    );
+    setTextById("updatedInfo", `Updated: ${c.time}`);
 
     // Forecast table (hourly + 6h steps) from hourly payload
     const hourly = data.hourly || {};
