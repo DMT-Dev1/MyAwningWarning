@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Top line: medium length, curls upward at right end -->
+  <path d="M5 22 H52 Q68 22 68 12 Q68 2 58 2 Q48 2 48 12" stroke="#a8dff5" stroke-width="7"/>
+  <!-- Middle line: longest, curls downward at right end -->
+  <path d="M5 35 H72 Q84 35 84 45 Q84 55 74 55 Q64 55 64 45" stroke="#c4eafa" stroke-width="7"/>
+  <!-- Bottom line: shortest, curls downward at right end -->
+  <path d="M5 50 H46 Q58 50 58 60 Q58 68 50 68 Q42 68 42 60" stroke="#daf3ff" stroke-width="7"/>
+</svg>
