@@ -706,8 +706,7 @@ initSettingsListeners();
 function renderDefaultSettingsText() {
   const el = document.getElementById("defaultSettingsDisplay");
   if (!el) return;
-  el.textContent =
-    `Default thresholds: wind caution ${DEFAULT_SETTINGS.maxWindGustCaution} km/h, wind alarm ${DEFAULT_SETTINGS.maxWindGustAlarm} km/h, min temp alarm ${DEFAULT_SETTINGS.minTempAlarm}°C, min temp caution ${DEFAULT_SETTINGS.minTempCaution}°C, max temp caution ${DEFAULT_SETTINGS.maxTempCaution}°C, max temp alarm ${DEFAULT_SETTINGS.maxTempAlarm}°C.`;
+  el.textContent = `Default thresholds: wind caution ${DEFAULT_SETTINGS.maxWindGustCaution} km/h, wind alarm ${DEFAULT_SETTINGS.maxWindGustAlarm} km/h, min temp alarm ${DEFAULT_SETTINGS.minTempAlarm}°C, min temp caution ${DEFAULT_SETTINGS.minTempCaution}°C, max temp caution ${DEFAULT_SETTINGS.maxTempCaution}°C, max temp alarm ${DEFAULT_SETTINGS.maxTempAlarm}°C.`;
 }
 renderDefaultSettingsText();
 
@@ -1211,7 +1210,8 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
   const now = new Date();
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-  const isSummarySolarEligibleTimeClass = (timeClass) => timeClass === "time-day";
+  const isSummarySolarEligibleTimeClass = (timeClass) =>
+    timeClass === "time-day";
 
   const describeWhen = (date, fallbackBucketDate = date) => {
     const asDate = date instanceof Date ? date : new Date(date);
@@ -1370,7 +1370,8 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
       const rating = getDailySolarRating(entry.totalRadiation);
       return Boolean(
         rating &&
-          (rating.className === "solar-poor" || rating.className === "solar-fair"),
+        (rating.className === "solar-poor" ||
+          rating.className === "solar-fair"),
       );
     })
     .map((isPoor, idx, arr) => {
@@ -1587,9 +1588,7 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
     );
   }
 
-  lines.push(
-    `<div><strong>Next 24 hours:</strong></div>`,
-  );
+  lines.push(`<div><strong>Next 24 hours:</strong></div>`);
 
   const riskSentences = [];
   if (windAlarmIdx >= 0 && windCautionIdx >= 0) {
@@ -1746,7 +1745,9 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
         (dailySolar.className === "solar-poor" ||
           dailySolar.className === "solar-fair")
       ) {
-        alerts.push(`Solar ${dailySolar.label.toLowerCase()} generation expected`);
+        alerts.push(
+          `Solar ${dailySolar.label.toLowerCase()} generation expected`,
+        );
       }
 
       if (alerts.length) {
@@ -2259,8 +2260,7 @@ function buildForecast(data) {
       riskTriggers.push({
         type: "solar",
         level: "caution",
-        icon:
-          dailySolarForRisk.className === "solar-poor" ? "☀️" : "🌤",
+        icon: dailySolarForRisk.className === "solar-poor" ? "☀️" : "🌤",
         label: `Solar ${dailySolarForRisk.label}`,
       });
     }
