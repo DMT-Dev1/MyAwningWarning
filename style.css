@@ -1935,7 +1935,9 @@ footer .final-note {
   bottom: 3px;
   background: #c0cfe0;
   border-radius: 50%;
-  transition: transform 0.25s, background 0.25s;
+  transition:
+    transform 0.25s,
+    background 0.25s;
 }
 
 .switch input:checked + .slider {

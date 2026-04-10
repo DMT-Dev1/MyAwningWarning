@@ -600,7 +600,9 @@ function initSettingsListeners() {
   if (daylightToggle && daylightLabel) {
     daylightToggle.addEventListener("change", () => {
       daylightLabel.textContent = daylightToggle.checked ? "YES" : "NO";
-      daylightLabel.style.color = daylightToggle.checked ? "#90ee90" : "#ff9090";
+      daylightLabel.style.color = daylightToggle.checked
+        ? "#90ee90"
+        : "#ff9090";
     });
   }
 }
@@ -1926,7 +1928,10 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
             is7day: true,
           };
         }
-        if (period.bestCode !== undefined && getWeatherSeverity(period.bestCode) >= 6) {
+        if (
+          period.bestCode !== undefined &&
+          getWeatherSeverity(period.bestCode) >= 6
+        ) {
           return {
             date: entry.date,
             type: "rain",
@@ -1965,7 +1970,8 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
   {
     let awningActionLine = "";
     let awningActionLevel = "none";
-    const windBreach = nearestBreach && nearestBreach.type === "wind" ? nearestBreach : null;
+    const windBreach =
+      nearestBreach && nearestBreach.type === "wind" ? nearestBreach : null;
 
     if (windBreach) {
       windAlertInAwning = true;
@@ -2023,7 +2029,8 @@ function updateLookaheadSummary(segments, hourlyPoints = [], summaryRows = []) {
         }
       }
     } else {
-      awningActionLine = "No wind action needed — no alarm-level gusts expected in the next 7 days.";
+      awningActionLine =
+        "No wind action needed — no alarm-level gusts expected in the next 7 days.";
     }
     lines.push(
       `<div class="summary-action-required summary-action-${awningActionLevel}"><strong>Awning Warning:</strong> ${awningActionLine}</div>`,
@@ -2707,7 +2714,10 @@ function buildForecast(data) {
     todaySolarForecastEl.className = "today-solar-forecast-value";
     if (todaySolarRating) {
       todaySolarForecastEl.innerHTML = `<span class="solar-label">${todaySolarRating.label}</span> <span class="solar-value">${todaySolarRating.displayValue}</span>`;
-      todaySolarForecastEl.classList.add("solar-cell", todaySolarRating.className);
+      todaySolarForecastEl.classList.add(
+        "solar-cell",
+        todaySolarRating.className,
+      );
     } else {
       todaySolarForecastEl.textContent = "—";
       todaySolarForecastEl.classList.add("solar-cell", "solar-na");
@@ -3110,7 +3120,9 @@ async function fetchWeather(lat, lon) {
     wxStatus.textContent = "";
     wxStatus.style.display = "none";
   } catch (e) {
-    const todaySolarForecastEl = document.getElementById("wxTodaySolarForecast");
+    const todaySolarForecastEl = document.getElementById(
+      "wxTodaySolarForecast",
+    );
     if (todaySolarForecastEl) {
       todaySolarForecastEl.className = "today-solar-forecast-value";
       todaySolarForecastEl.textContent = "—";
