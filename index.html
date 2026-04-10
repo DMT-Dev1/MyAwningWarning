@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-      Weather Warning - Advanced wind and weather warnings for your location
+      My Awning Warning - customised wind, weather and solar forecasting for those on the road
     </title>
     <meta
       name="description"
@@ -27,10 +27,9 @@
       <div class="logo-title">
         <img src="icon.png" alt="Weather logo" class="app-logo" />
         <div>
-          <h1>My Weather Warnings</h1>
+          <h1>My Awning Warning</h1>
           <p class="subtle title-subtitle">
-            Customisable wind, weather and solar forecasting for Caravans and
-            Campers
+            Customised wind, weather and solar forecasting for those on the road
           </p>
         </div>
       </div>
@@ -43,6 +42,7 @@
       </section>
 
       <section class="card current-grid">
+        <h2 id="currentConditionsHeading">Current Conditions</h2>
         <div class="pane time-pane">
           <div class="time">
             <div id="clock" class="clock">—:—</div>
@@ -128,6 +128,10 @@
           <div id="weatherData" class="data hidden">
             <div class="wx-alerts-banner">
               <strong>Alerts:</strong> <span id="wxAlerts">—</span>
+            </div>
+            <div class="today-solar-forecast">
+              <strong>Today's solar generation forecast:</strong>
+              <span id="wxTodaySolarForecast" class="today-solar-forecast-value">—</span>
             </div>
             <div class="weather-current-grid">
               <div class="wx-icon-pane">
@@ -329,28 +333,24 @@
           <span class="legend-alarm">max alarm</span>
         </div>
         <div class="settings-box group-awning">
-          <div class="settings-group-title">Awning advisor</div>
+          <div class="settings-group-title">Awning preferences</div>
           <div class="threshold-input-grid two-col">
-            <label>
-              Minimum hours to deploy awning
-              <input
-                id="awningMinHours"
-                type="number"
-                min="1"
-                max="168"
-                step="1"
-                value="48"
-                aria-label="Minimum safe hours to deploy awning"
-              />
-            </label>
-            <label class="toggle-label">
-              <span>Happy to operate awning in the dark</span>
-              <input
-                id="awningDarkAllowed"
-                type="checkbox"
-                aria-label="Allow awning operation in the dark"
-              />
-            </label>
+            <div class="awning-daylight-setting">
+              <div class="awning-daylight-toggle-row">
+                <span class="awning-daylight-label">Awning operation daylight hours only?</span>
+                <label class="switch">
+                  <input
+                    id="awningDaylightOnly"
+                    type="checkbox"
+                    checked
+                    aria-label="Awning operation daylight hours only"
+                  />
+                  <span class="slider round"></span>
+                </label>
+                <span class="toggle-value-label" id="awningDaylightOnlyLabel">YES</span>
+              </div>
+              <p class="setting-explanation">If this is set to YES, you will only be advised to change the awning status (set up / set down) during daylight hours. NOTE: this may result in you being advised to bring down the awning in advance of predicted high winds.</p>
+            </div>
           </div>
         </div>
         <div class="settings-actions">
