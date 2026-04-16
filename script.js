@@ -73,7 +73,8 @@ function detectClientBrowserAndOs() {
   const isAndroid = /Android/i.test(ua);
   const isWindows = /Win/i.test(platform) || /Windows/i.test(ua);
   const isMac =
-    /Mac/i.test(platform) || (/Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua));
+    /Mac/i.test(platform) ||
+    (/Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua));
   const isLinux = /Linux/i.test(platform) || /Linux/i.test(ua);
 
   let browser = "Unknown browser";
@@ -200,7 +201,10 @@ function initLocationHelpChooser() {
   setSelectOptions(locationOsSelect, LOCATION_HELP_OSES);
 
   const detected = detectClientBrowserAndOs();
-  if (locationBrowserSelect && LOCATION_HELP_BROWSERS.includes(detected.browser)) {
+  if (
+    locationBrowserSelect &&
+    LOCATION_HELP_BROWSERS.includes(detected.browser)
+  ) {
     locationBrowserSelect.value = detected.browser;
   }
   if (locationOsSelect && LOCATION_HELP_OSES.includes(detected.os)) {
@@ -209,13 +213,17 @@ function initLocationHelpChooser() {
 
   if (locationHelpApplyButton) {
     locationHelpApplyButton.addEventListener("click", () => {
-      showLocationPermissionHelp(lastLocationHelpReason, { preferDetected: false });
+      showLocationPermissionHelp(lastLocationHelpReason, {
+        preferDetected: false,
+      });
     });
   }
 
   if (locationHelpAutoButton) {
     locationHelpAutoButton.addEventListener("click", () => {
-      showLocationPermissionHelp(lastLocationHelpReason, { preferDetected: true });
+      showLocationPermissionHelp(lastLocationHelpReason, {
+        preferDetected: true,
+      });
     });
   }
 }
@@ -225,7 +233,10 @@ function showLocationPermissionHelp(reason = "", options = {}) {
   const { preferDetected = true } = options;
   const detected = detectClientBrowserAndOs();
 
-  if (locationBrowserSelect && LOCATION_HELP_BROWSERS.includes(detected.browser)) {
+  if (
+    locationBrowserSelect &&
+    LOCATION_HELP_BROWSERS.includes(detected.browser)
+  ) {
     if (preferDetected) locationBrowserSelect.value = detected.browser;
   }
   if (locationOsSelect && LOCATION_HELP_OSES.includes(detected.os)) {
@@ -375,7 +386,9 @@ function startLocationWaitTimer() {
       locErr.textContent =
         "Location request is taking too long. Use the step-by-step guide below. If needed, choose your browser and operating system, then click Show steps.";
       setWeatherBlockedByLocation();
-      showLocationPermissionHelp("The browser has not returned your location yet.");
+      showLocationPermissionHelp(
+        "The browser has not returned your location yet.",
+      );
       const retryButton = document.getElementById("retryLocationButton");
       if (retryButton) retryButton.style.display = "block";
     }
@@ -1113,7 +1126,9 @@ function showError(err) {
       locStatus.textContent = "Location error.";
       locErr.textContent =
         "An unknown location error occurred. Use the guide below and retry.";
-      showLocationPermissionHelp("The browser returned an unknown location error.");
+      showLocationPermissionHelp(
+        "The browser returned an unknown location error.",
+      );
   }
 
   setManualLocationVisible(true);
