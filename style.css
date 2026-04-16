@@ -1254,6 +1254,88 @@ footer .final-note {
   margin-top: 10px;
 }
 
+#locationPermissionHelp {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(17, 31, 59, 0.6);
+  text-align: left;
+}
+
+.location-help-title {
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.location-help-reason {
+  margin: 4px 0 8px;
+  color: var(--muted);
+}
+
+.location-help-steps {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--fg);
+}
+
+.location-help-steps li {
+  margin: 4px 0;
+}
+
+#locationHelpChooser {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(17, 31, 59, 0.35);
+  text-align: left;
+}
+
+.location-help-chooser-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.location-help-chooser-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.location-help-chooser-row select {
+  min-width: 160px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0e1b2f;
+  color: var(--fg);
+}
+
+.location-help-chooser-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.location-help-chooser-actions button {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #183059;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.location-help-chooser-actions button:hover,
+.location-help-chooser-actions button:focus {
+  background: #21417a;
+}
+
 .settings-actions {
   display: flex;
   align-items: flex-start;

@@ -13,7 +13,7 @@
     />
 
     <!-- Your stylesheet -->
-    <link rel="stylesheet" href="style.css?v=2026-04-16-2" />
+    <link rel="stylesheet" href="style.css?v=2026-04-16-3" />
 
     <!-- Leaflet CSS (from official quick-start) -->
     <link
@@ -67,6 +67,23 @@
             <div><strong>Address:</strong> <span id="address">—</span></div>
           </div>
           <div id="locationError" class="error hidden"></div>
+          <div id="locationPermissionHelp" class="note hidden"></div>
+          <div id="locationHelpChooser" class="note hidden">
+            <div class="location-help-chooser-row">
+              <label>
+                Browser
+                <select id="locationBrowserSelect"></select>
+              </label>
+              <label>
+                Operating system
+                <select id="locationOsSelect"></select>
+              </label>
+            </div>
+            <div class="location-help-chooser-actions">
+              <button id="locationHelpApply" type="button">Show steps</button>
+              <button id="locationHelpAuto" type="button">Use detected device</button>
+            </div>
+          </div>
 
           <div
             id="manualLocationFallback"
@@ -459,6 +476,6 @@
     ></script>
 
     <!-- Your script (defer so DOM is parsed first) -->
-    <script src="script.js?v=2026-04-16-2" defer></script>
+    <script src="script.js?v=2026-04-16-3" defer></script>
   </body>
 </html>

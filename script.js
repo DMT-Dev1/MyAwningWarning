@@ -28,6 +28,252 @@ setInterval(updateClock, 1000);
 const locStatus = document.getElementById("locationStatus");
 const locData = document.getElementById("locationData");
 const locErr = document.getElementById("locationError");
+const locationPermissionHelp = document.getElementById(
+  "locationPermissionHelp",
+);
+const locationHelpChooser = document.getElementById("locationHelpChooser");
+const locationBrowserSelect = document.getElementById("locationBrowserSelect");
+const locationOsSelect = document.getElementById("locationOsSelect");
+const locationHelpApplyButton = document.getElementById("locationHelpApply");
+const locationHelpAutoButton = document.getElementById("locationHelpAuto");
+
+const LOCATION_HELP_BROWSERS = [
+  "Safari",
+  "Chrome",
+  "Firefox",
+  "Edge",
+  "Opera",
+  "Unknown browser",
+];
+const LOCATION_HELP_OSES = [
+  "macOS",
+  "Windows",
+  "iOS",
+  "Android",
+  "Linux",
+  "Unknown OS",
+];
+let lastLocationHelpReason = "";
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function detectClientBrowserAndOs() {
+  const ua = navigator.userAgent || "";
+  const vendor = navigator.vendor || "";
+  const platform = navigator.platform || "";
+
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isWindows = /Win/i.test(platform) || /Windows/i.test(ua);
+  const isMac =
+    /Mac/i.test(platform) || (/Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua));
+  const isLinux = /Linux/i.test(platform) || /Linux/i.test(ua);
+
+  let browser = "Unknown browser";
+  if (/Edg\//i.test(ua)) {
+    browser = "Edge";
+  } else if (/OPR\//i.test(ua) || /Opera/i.test(ua)) {
+    browser = "Opera";
+  } else if (/Firefox\//i.test(ua)) {
+    browser = "Firefox";
+  } else if (/CriOS\//i.test(ua) || /Chrome\//i.test(ua)) {
+    browser = "Chrome";
+  } else if (/Safari\//i.test(ua) && /Apple/i.test(vendor)) {
+    browser = "Safari";
+  }
+
+  let os = "Unknown OS";
+  if (isIOS) {
+    os = "iOS";
+  } else if (isAndroid) {
+    os = "Android";
+  } else if (isMac) {
+    os = "macOS";
+  } else if (isWindows) {
+    os = "Windows";
+  } else if (isLinux) {
+    os = "Linux";
+  }
+
+  return { browser, os };
+}
+
+function getLocationPermissionSteps(browser, os, siteLabel) {
+  const chromeDesktopSteps = [
+    "Open this page in Chrome and click the site icon next to the address bar.",
+    "Set Location to Allow for this site.",
+    "If Location is blocked globally, open chrome://settings/content/location and make sure sites are allowed to ask.",
+    "Reload this page and click Retry location.",
+  ];
+
+  const firefoxSteps = [
+    "Click the lock icon next to the address bar.",
+    "Find Permissions and allow location access for this site.",
+    "If needed, open about:preferences#privacy and review Location permissions.",
+    "Reload this page and click Retry location.",
+  ];
+
+  const edgeSteps = [
+    "Click the lock icon next to the address bar.",
+    "Set Location to Allow for this site.",
+    "If blocked globally, open edge://settings/content/location and allow sites to ask.",
+    "Reload this page and click Retry location.",
+  ];
+
+  if (browser === "Safari" && os === "macOS") {
+    return [
+      "In Safari, go to Safari -> Settings.",
+      "Open the Websites tab, then choose Location in the left sidebar.",
+      `Find ${siteLabel} and set it to Allow.`,
+      "If still blocked, open macOS System Settings -> Privacy & Security -> Location Services and enable Safari.",
+      "Reload this page and click Retry location.",
+    ];
+  }
+
+  if (browser === "Safari" && os === "iOS") {
+    return [
+      "Open iPhone/iPad Settings -> Privacy & Security -> Location Services.",
+      "Tap Safari Websites.",
+      "Choose While Using the App (or Ask Next Time/When I Share) and enable Precise Location if available.",
+      "Return to Safari, reload this page, and tap Retry location.",
+    ];
+  }
+
+  if (browser === "Chrome" && os === "Android") {
+    return [
+      "In Chrome, tap the site icon in the address bar and open Permissions.",
+      "Set Location to Allow.",
+      "If Android blocks location, open Android Settings -> Location and turn Location on.",
+      "Open Android Settings -> Apps -> Chrome -> Permissions -> Location and allow access.",
+      "Return to this page, reload, and tap Retry location.",
+    ];
+  }
+
+  if (browser === "Chrome") {
+    return chromeDesktopSteps;
+  }
+
+  if (browser === "Firefox") {
+    return firefoxSteps;
+  }
+
+  if (browser === "Edge") {
+    return edgeSteps;
+  }
+
+  if (browser === "Opera") {
+    return [
+      "Click the site icon next to the address bar.",
+      "Open Site settings and set Location to Allow.",
+      "If blocked globally, open opera://settings/content/location and allow sites to ask.",
+      "Reload this page and click Retry location.",
+    ];
+  }
+
+  return [
+    "Open your browser site permissions for this page.",
+    "Set Location permission to Allow.",
+    "Check your operating system location settings and make sure the browser can access location.",
+    "Reload this page and click Retry location.",
+  ];
+}
+
+function setSelectOptions(selectEl, options) {
+  if (!selectEl || selectEl.options.length) return;
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    selectEl.appendChild(option);
+  });
+}
+
+function initLocationHelpChooser() {
+  setSelectOptions(locationBrowserSelect, LOCATION_HELP_BROWSERS);
+  setSelectOptions(locationOsSelect, LOCATION_HELP_OSES);
+
+  const detected = detectClientBrowserAndOs();
+  if (locationBrowserSelect && LOCATION_HELP_BROWSERS.includes(detected.browser)) {
+    locationBrowserSelect.value = detected.browser;
+  }
+  if (locationOsSelect && LOCATION_HELP_OSES.includes(detected.os)) {
+    locationOsSelect.value = detected.os;
+  }
+
+  if (locationHelpApplyButton) {
+    locationHelpApplyButton.addEventListener("click", () => {
+      showLocationPermissionHelp(lastLocationHelpReason, { preferDetected: false });
+    });
+  }
+
+  if (locationHelpAutoButton) {
+    locationHelpAutoButton.addEventListener("click", () => {
+      showLocationPermissionHelp(lastLocationHelpReason, { preferDetected: true });
+    });
+  }
+}
+
+function showLocationPermissionHelp(reason = "", options = {}) {
+  if (!locationPermissionHelp) return;
+  const { preferDetected = true } = options;
+  const detected = detectClientBrowserAndOs();
+
+  if (locationBrowserSelect && LOCATION_HELP_BROWSERS.includes(detected.browser)) {
+    if (preferDetected) locationBrowserSelect.value = detected.browser;
+  }
+  if (locationOsSelect && LOCATION_HELP_OSES.includes(detected.os)) {
+    if (preferDetected) locationOsSelect.value = detected.os;
+  }
+
+  let browser = detected.browser;
+  let os = detected.os;
+  if (!preferDetected) {
+    browser = locationBrowserSelect?.value || browser;
+    os = locationOsSelect?.value || os;
+  }
+
+  if (reason) {
+    lastLocationHelpReason = reason;
+  }
+
+  const siteLabel = escapeHtml(window.location.hostname || "this web page");
+  const steps = getLocationPermissionSteps(browser, os, siteLabel)
+    .map((step) => `<li>${escapeHtml(step)}</li>`)
+    .join("");
+
+  const reasonLine = lastLocationHelpReason
+    ? `<p class="location-help-reason"><strong>Why this appears:</strong> ${escapeHtml(lastLocationHelpReason)}</p>`
+    : "";
+
+  locationPermissionHelp.innerHTML = `
+    <div class="location-help-title"><strong>Location Help for ${escapeHtml(browser)} on ${escapeHtml(os)}</strong></div>
+    ${reasonLine}
+    <ol class="location-help-steps">${steps}</ol>
+  `;
+
+  if (locationHelpChooser) {
+    locationHelpChooser.classList.remove("hidden");
+  }
+  locationPermissionHelp.classList.remove("hidden");
+}
+
+function hideLocationPermissionHelp() {
+  if (!locationPermissionHelp) return;
+  locationPermissionHelp.classList.add("hidden");
+  locationPermissionHelp.innerHTML = "";
+  if (locationHelpChooser) {
+    locationHelpChooser.classList.add("hidden");
+  }
+}
+
+initLocationHelpChooser();
 
 function setPageSectionsVisible(visible) {
   const cards = document.querySelectorAll("main.container .card");
@@ -127,10 +373,9 @@ function startLocationWaitTimer() {
         "Still waiting for location. Please check location permissions/settings.";
       locErr.classList.remove("hidden");
       locErr.textContent =
-        "Location request is taking too long. Ensure your browser allows location access, refresh, and use Retry location.";
-      wxStatus.textContent = "Weather requires your location.";
-      wxErr.classList.remove("hidden");
-      wxErr.textContent = "Location timeout, unable to load weather.";
+        "Location request is taking too long. Use the step-by-step guide below. If needed, choose your browser and operating system, then click Show steps.";
+      setWeatherBlockedByLocation();
+      showLocationPermissionHelp("The browser has not returned your location yet.");
       const retryButton = document.getElementById("retryLocationButton");
       if (retryButton) retryButton.style.display = "block";
     }
@@ -141,6 +386,14 @@ function startLocationWaitTimer() {
 const wxStatus = document.getElementById("weatherStatus");
 const wxData = document.getElementById("weatherData");
 const wxErr = document.getElementById("weatherError");
+
+function setWeatherBlockedByLocation() {
+  wxData.classList.add("hidden");
+  wxStatus.style.display = "block";
+  wxStatus.textContent = "Weather is waiting for location.";
+  wxErr.classList.remove("hidden");
+  wxErr.textContent = "See location help steps above.";
+}
 
 // Leaflet instances
 let map, marker, accuracyCircle;
@@ -725,6 +978,7 @@ function showPosition(pos) {
   setPageSectionsVisible(true);
   setManualLocationVisible(true);
   setManualLocationButtonLabel(true);
+  hideLocationPermissionHelp();
   const retryButton = document.getElementById("retryLocationButton");
   if (retryButton) retryButton.style.display = "none";
 
@@ -828,8 +1082,7 @@ function showError(err) {
   alertsWideWrap?.classList.add("hidden");
   locData.classList.add("hidden");
   locErr.classList.remove("hidden");
-  wxData.classList.add("hidden");
-  wxStatus.textContent = "";
+  setWeatherBlockedByLocation();
 
   setPageSectionsVisible(false);
   const retryButton = document.getElementById("retryLocationButton");
@@ -839,32 +1092,28 @@ function showError(err) {
     case err.PERMISSION_DENIED:
       locStatus.textContent = "Permission denied.";
       locErr.textContent =
-        "This app needs your location to work. Please allow location access to continue by enabling it in the browser site settings.";
-      wxErr.classList.remove("hidden");
-      wxErr.textContent =
-        "Weather requires your approximate location. Refresh and click Retry location after permission grant.";
+        "Location permission is blocked for this page. Use the step-by-step guide below. If needed, choose your browser and operating system, then click Show steps.";
+      showLocationPermissionHelp("Location permission was denied.");
       break;
     case err.POSITION_UNAVAILABLE:
       locStatus.textContent = "Location unavailable.";
-      locErr.textContent = "We couldn’t determine your location.";
-      wxErr.classList.remove("hidden");
-      wxErr.textContent = "Weather requires a location.";
+      locErr.textContent =
+        "We couldn’t determine your location. Follow the guide below, then retry location.";
+      showLocationPermissionHelp(
+        "Location service could not provide a valid position.",
+      );
       break;
     case err.TIMEOUT:
       locStatus.textContent = "Location timed out.";
       locErr.textContent =
-        "Getting your position took too long. Try moving to an open area, enable high accuracy, or retry after a moment.";
-      wxErr.classList.remove("hidden");
-      wxErr.textContent =
-        "Weather requires a location. Click Retry location, refresh page, or check browser location permissions.";
+        "Location timed out. Use the guide below and retry after updating your browser or device location settings.";
+      showLocationPermissionHelp("Location request timed out.");
       break;
     default:
       locStatus.textContent = "Location error.";
       locErr.textContent =
-        "An unknown error occurred. Verify the browser allows location access, refresh, and retry.";
-      wxErr.classList.remove("hidden");
-      wxErr.textContent =
-        "Weather requires a location. Click Retry location, check location services, and ensure HTTPS/localhost.";
+        "An unknown location error occurred. Use the guide below and retry.";
+      showLocationPermissionHelp("The browser returned an unknown location error.");
   }
 
   setManualLocationVisible(true);
@@ -891,7 +1140,10 @@ if ("geolocation" in navigator) {
 } else {
   setPageSectionsVisible(false);
   locStatus.textContent = "Geolocation not supported in this browser.";
-  wxStatus.textContent = "Weather requires a location.";
+  setWeatherBlockedByLocation();
+  showLocationPermissionHelp(
+    "This browser does not support geolocation for this page.",
+  );
   setManualLocationVisible(true);
   setManualLocationMessage(
     "No automatic location available. Enter latitude/longitude or suburb/city below.",
@@ -914,6 +1166,9 @@ if (retryButton) {
       });
     } else {
       locStatus.textContent = "Geolocation not supported in this browser.";
+      showLocationPermissionHelp(
+        "This browser does not support geolocation for this page.",
+      );
     }
   });
 }
